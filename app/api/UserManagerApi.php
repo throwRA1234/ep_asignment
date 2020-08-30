@@ -177,7 +177,7 @@ Class UserManagerApi extends BaseApi {
                'value' => $isSupervisor)
         );
 
-         DB::callStoredProcedure('call sp_update_user_test(?,?,?,?,?)', $sparams);
+         DB::callStoredProcedure('call sp_update_user(?,?,?,?,?)', $sparams);
          
         return json_encode(['status' => 'success', 'message' => 'user '.$uname.' has been updated!']);
         
