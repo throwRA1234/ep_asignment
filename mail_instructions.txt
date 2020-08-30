@@ -1,0 +1,110 @@
+In order for PHP's mail() function to work, the Operating System (OS) needs to have correct configurations set up in mail.rc 
+Basically, if you can't send a mail via mailx then PHP's mail() function likely also won't be able to.
+
+This short document describes the steps to make the correct configurations. 
+In this document, the assumed OS is Debian, but similar steps should work for other distros.
+
+Step 1 - verify that the required packages exist:
+
+Verify that the necessary software is installed:
+
+Open up a shell session, and become root by running: 
+
+    su -
+
+Then execute: 
+
+    apt list --installed | grep "msmtp\|bsd-mailx"
+
+You should see two results, e.g.:
+
+bsd-mailx/stable,stable,now 8.1.2-0.20180807cvs-1 amd64 [installed]
+msmtp/stable,stable,now 1.8.3-1 amd64 [installed]
+
+If either of those packages are not installed, simply run:
+
+    apt -y install <package_name> 
+
+to install it.
+
+Step 2 - configure msmtp:
+
+msmtp will allow us to send emails using SMTP much like a traditional email client. 
+For this, we simply need to provide a valid SMTP configuration. 
+As I do not own a mailserver, this example will be with gmail.
+
+Navigate to /etc, and then create a new file msmtprc
+
+    cd /etc; vim msmtprc
+
+and then add a valid smtp configuration:
+
+========================================
+
+account vitya.r.93@gmail.com
+host smtp.gmail.com
+port 587
+tls on
+tls_starttls on
+auth on
+user vitya.r.93
+password [REDACTED]
+from vitya.r.93@gmail.com
+
+account default : vitya.r.93@gmail.com
+
+=========================================
+
+save and exit.
+
+Step 3 - configure mail.rc:
+
+msmtp is usually not the default application for sending emails in most basic installations
+so we need to make sure that linux will pick msmtp
+
+navigate to /etc and open mail.rc
+
+    cd /etc; vim mail.rc
+
+and add the following content to the end of the file:
+
+========================================
+
+set sendmail="/usr/bin/msmtp"
+set message-sendmail-extra-arguments="-a gmail"
+
+========================================
+
+save and exit.
+
+Step 4 - test out the configuration using mailx:
+
+I recommend running the verbose option, in case something goes wrong, it provides useful information.
+
+Execute the following command:
+
+    echo "test" | mailx -v -s "Test" <recipient_email_address>
+
+If the configurations have been set up correct, then the recipient should have received the email.
+
+Step 5 - Configure php to use msmtp:
+
+navigate to apache2 php.ini file and open it:
+
+    cd /etc/php/7.0/apache2; vim php.ini
+
+search for sendmail_path and set it to the following value:
+
+========================================
+
+sendmail_path = "/usr/bin/msmtp -t"
+
+========================================
+
+save and exit.
+
+Exit root: 
+
+   exit
+
+And mail() function should now work in php.
